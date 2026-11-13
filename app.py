@@ -61,6 +61,7 @@ def ensure_database(seed_demo: bool = True) -> None:
     is_new = not DB_FILE.exists()
     conn = sqlite3.connect(DB_FILE)
     conn.executescript(SCHEMA_SQL)
+    conn.execute("UPDATE expenses SET note = substr(note, 10) WHERE note LIKE '[sample] %'")  # tidy older sample rows
     if is_new and seed_demo:
         today = date.today()
         samples = [
@@ -110,7 +111,7 @@ def execute_demo_migration() -> None:
 
 def seed_history_demo(start=None) -> int:
     """Add sample expenses from May of this year up to today, one block per month. Safe to run again:
-    a month that already has [sample] rows is skipped."""
+    a month that already has any expenses is skipped."""
     import random
     today = date.today()
     if start is None:
@@ -132,20 +133,19 @@ def seed_history_demo(start=None) -> int:
         y, m = start.year, start.month
         while (y, m) <= (today.year, today.month):
             ym = f"{y:04d}-{m:02d}"
-            has = conn.execute("SELECT COUNT(*) FROM expenses WHERE note LIKE '[sample]%' AND substr(spent_on,1,7)=?",
-                               (ym,)).fetchone()[0]
+            has = conn.execute("SELECT COUNT(*) FROM expenses WHERE substr(spent_on,1,7)=?", (ym,)).fetchone()[0]
             if not has:
                 rng = random.Random(y * 100 + m)  # same month -> same sample data every time
                 last_day = today.day if (y, m) == (today.year, today.month) else calendar.monthrange(y, m)[1]
                 for _ in range(rng.randint(15, 24) if last_day > 20 else max(4, last_day)):
                     cat = rng.choices(CATEGORIES, weights=[34, 16, 12, 6, 6, 8, 4])[0]
                     note, lo, hi = rng.choice(pool[cat])
-                    rows.append((round(rng.uniform(lo, hi), 2), cat, f"[sample] {note}",
+                    rows.append((round(rng.uniform(lo, hi), 2), cat, note,
                                  date(y, m, rng.randint(1, last_day)).isoformat()))
                 if last_day >= 5:
-                    rows.append((150.0, "Bills", "[sample] Internet bill", date(y, m, 5).isoformat()))
+                    rows.append((150.0, "Bills", "Internet bill", date(y, m, 5).isoformat()))
                 if last_day >= 12:
-                    rows.append((round(rng.uniform(70, 130), 2), "Bills", "[sample] Electricity", date(y, m, 12).isoformat()))
+                    rows.append((round(rng.uniform(70, 130), 2), "Bills", "Electricity", date(y, m, 12).isoformat()))
             m += 1
             if m > 12:
                 m, y = 1, y + 1
@@ -780,9 +780,18 @@ CUSTOM_CSS = """
 }
 
 /* ---- hide default Streamlit chrome ---- */
-#MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"],
-[data-testid="stStatusWidget"] { display: none !important; visibility: hidden; }
-header[data-testid="stHeader"] { background: transparent; height: 0; }
+#MainMenu, footer, [data-testid="stDecoration"], [data-testid="stStatusWidget"],
+[data-testid="stToolbarActions"], [data-testid="stMainMenu"], [data-testid="stAppDeployButton"],
+.stDeployButton { display: none !important; visibility: hidden; }
+header[data-testid="stHeader"] { background: transparent !important; }  /* keep the header: it holds the sidebar button */
+
+/* ---- sidebar open / close buttons (always visible, light-blue style) ---- */
+[data-testid="stExpandSidebarButton"], [data-testid="collapsedControl"], [data-testid="stSidebarCollapsedControl"] {
+  display: flex !important; visibility: visible !important; opacity: 1 !important;
+  background: #fff; border: 1px solid var(--sky-300); border-radius: 12px; box-shadow: var(--shadow); z-index: 999991; }
+[data-testid="stExpandSidebarButton"] *, [data-testid="collapsedControl"] *, [data-testid="stSidebarCollapsedControl"] *,
+[data-testid="stSidebarCollapseButton"] * { color: var(--blue-600) !important; }
+[data-testid="stSidebarCollapseButton"] { visibility: visible !important; }
 
 /* ---- page background ---- */
 [data-testid="stAppViewContainer"], .stApp {
@@ -792,7 +801,7 @@ header[data-testid="stHeader"] { background: transparent; height: 0; }
     linear-gradient(180deg, #f4f9ff 0%, #eaf3ff 100%) !important;
   color: var(--ink);
 }
-.block-container { padding-top: 1.6rem !important; max-width: 1280px; }
+.block-container { padding-top: 3.2rem !important; max-width: 1280px; }
 html, body, [class*="css"] { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
 h1, h2, h3, h4, h5, p, label, span { color: var(--ink); }
 
