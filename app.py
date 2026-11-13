@@ -495,10 +495,102 @@ SAMPLE_QUESTIONS = [
     "delete all my expenses",
 ]
 
+CUSTOM_CSS = """
+<style>
+:root {
+  --sky-50: #f4f9ff; --sky-100: #eaf3ff; --sky-200: #d9e8fb; --sky-300: #bcd8fa;
+  --blue-500: #3b82f6; --blue-600: #2563eb; --blue-700: #1d4ed8; --cyan-400: #38bdf8;
+  --ink: #0f2a4a; --muted: #5b7694; --shadow: 0 6px 24px rgba(37,99,235,.10);
+}
+
+/* ---- hide default Streamlit chrome ---- */
+#MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"],
+[data-testid="stStatusWidget"] { display: none !important; visibility: hidden; }
+header[data-testid="stHeader"] { background: transparent; height: 0; }
+
+/* ---- page background ---- */
+[data-testid="stAppViewContainer"], .stApp {
+  background:
+    radial-gradient(1100px 520px at 0% -10%, rgba(56,189,248,.28), transparent 60%),
+    radial-gradient(900px 520px at 100% 0%, rgba(37,99,235,.12), transparent 55%),
+    linear-gradient(180deg, #f4f9ff 0%, #eaf3ff 100%) !important;
+  color: var(--ink);
+}
+.block-container { padding-top: 1.6rem !important; max-width: 1280px; }
+html, body, [class*="css"] { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+h1, h2, h3, h4, h5, p, label, span { color: var(--ink); }
+
+/* ---- hero header ---- */
+.app-hero { display:flex; align-items:center; gap:16px; padding:22px 26px; margin-bottom:18px; border-radius:26px; color:#fff;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #38bdf8 100%);
+  box-shadow: 0 14px 34px rgba(37,99,235,.28); position:relative; overflow:hidden; }
+.app-hero::after { content:""; position:absolute; right:-70px; top:-100px; width:280px; height:280px; border-radius:50%; background:rgba(255,255,255,.14); }
+.app-hero .logo { width:54px; height:54px; border-radius:16px; display:grid; place-items:center; font-size:28px;
+  background:rgba(255,255,255,.22); }
+.app-hero h1 { margin:0; font-size:1.7rem; font-weight:800; letter-spacing:-.02em; color:#fff !important; }
+.app-hero p { margin:2px 0 0; font-size:.92rem; opacity:.92; color:#fff !important; }
+.badges { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.badges span { background:rgba(255,255,255,.22); border-radius:999px; padding:4px 12px; font-size:.78rem; color:#fff !important; }
+
+/* ---- sidebar ---- */
+[data-testid="stSidebar"] { background: linear-gradient(180deg, #ffffff 0%, #eaf3ff 100%) !important;
+  border-right: 1px solid var(--sky-200); }
+[data-testid="stSidebar"] .block-container, [data-testid="stSidebarUserContent"] { padding-top: 1.2rem; }
+[data-testid="stSidebar"] h1 { font-size:1.35rem; font-weight:800; color: var(--blue-700); }
+[data-testid="stSidebar"] h3 { font-size:.95rem; font-weight:700; color: var(--blue-700); }
+[data-testid="stSidebar"] hr { border-color: var(--sky-200); }
+
+/* ---- inputs ---- */
+[data-baseweb="input"], [data-baseweb="base-input"], .stNumberInput > div > div {
+  background:#fff !important; border-radius:12px !important; border:1px solid var(--sky-300) !important; }
+[data-baseweb="input"]:focus-within, [data-baseweb="base-input"]:focus-within { border-color: var(--blue-500) !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.18); }
+input { color: var(--ink) !important; }
+
+/* ---- buttons ---- */
+.stButton > button { width:100%; border-radius:12px; border:1px solid var(--sky-300); background:#fff; color: var(--blue-700);
+  font-weight:600; text-align:left; transition: all .15s; box-shadow: 0 1px 2px rgba(37,99,235,.06); }
+.stButton > button:hover { background: var(--blue-600); color:#fff; border-color: var(--blue-600);
+  transform: translateY(-1px); box-shadow: 0 8px 18px rgba(37,99,235,.25); }
+.stButton > button:hover p { color:#fff !important; }
+.stButton > button:disabled { opacity:.5; }
+
+/* ---- expander ---- */
+[data-testid="stExpander"] { background:#fff; border:1px solid var(--sky-200) !important; border-radius:14px; }
+
+/* ---- chat ---- */
+.chat-title { font-size:1.05rem; font-weight:700; color: var(--blue-700); margin:18px 0 8px; }
+[data-testid="stChatMessage"] { background:#fff; border:1px solid var(--sky-200); border-radius:18px; padding:14px 16px;
+  box-shadow: var(--shadow); margin-bottom:10px; }
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) { background: var(--sky-100); border-color: var(--sky-300); }
+[data-testid="stChatInput"], [data-testid="stChatInput"] > div { border-radius:16px !important; background:#fff !important;
+  border:1px solid var(--sky-300) !important; box-shadow: var(--shadow); }
+[data-testid="stBottom"], [data-testid="stBottom"] > div { background: transparent !important; }
+
+/* ---- alerts, caption, iframe ---- */
+[data-testid="stAlert"] { border-radius:14px; background: var(--sky-100); border:1px solid var(--sky-300); }
+[data-testid="stCaptionContainer"] { color: var(--muted); }
+iframe { border:none !important; border-radius:28px; background:transparent; }
+[data-testid="stSpinner"] { color: var(--blue-600); }
+</style>
+"""
+
+HERO_HTML = """
+<div class="app-hero">
+  <div class="logo">💸</div>
+  <div>
+    <h1>AI Expense Tracker</h1>
+    <p>Tell the assistant what you spent, or ask about your money.</p>
+    <div class="badges"><span>MCP connected</span><span>Live schema discovery</span><span>PDPA masking on</span></div>
+  </div>
+</div>
+"""
+
 
 def main() -> None:
-    st.set_page_config(page_title="AI Expense Tracker (MCP)", page_icon="💸", layout="wide",
+    st.set_page_config(page_title="AI Expense Tracker", page_icon="💸", layout="wide",
                        initial_sidebar_state="expanded")
+    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
     ensure_database()
     if "uid" not in st.session_state:
         st.session_state.uid = f"u-{uuid.uuid4().hex[:8]}"
@@ -549,12 +641,11 @@ def main() -> None:
             st.text(get_live_ddl())
         st.caption("🔒 **Security:** MCP tool_filter least privilege | AST read-only guard | Read-only mount | PDPA masking")
 
-    st.title("💸 AI Expense Tracker")
-    st.caption("Connected via Model Context Protocol | Zero-Touch Schema Evolution | PDPA Masking Active")
+    st.markdown(HERO_HTML, unsafe_allow_html=True)
     render_dashboard(build_payload(currency, budget))
 
     # ---- chat history
-    st.markdown("##### 💬 Ask your assistant")
+    st.markdown('<div class="chat-title">💬 Ask your assistant</div>', unsafe_allow_html=True)
     for m in st.session_state.messages:
         with st.chat_message(m["role"]):
             st.markdown(m["content"])
