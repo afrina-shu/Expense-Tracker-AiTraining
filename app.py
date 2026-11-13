@@ -76,6 +76,8 @@ def ensure_database(seed_demo: bool = True) -> None:
                          (amount, category, note, day.isoformat()))
     conn.commit()
     conn.close()
+    if is_new and seed_demo:
+        seed_history_demo()  # May -> this month, so the monthly dashboard has data straight away
 
 
 def execute_demo_migration() -> None:
@@ -106,15 +108,17 @@ def execute_demo_migration() -> None:
     conn.close()
 
 
-def seed_history_demo(months: int = 6) -> int:
-    """Add sample expenses for the previous `months` months so the monthly charts have data. Idempotent."""
+def seed_history_demo(start=None) -> int:
+    """Add sample expenses from May of this year up to today, one block per month. Safe to run again:
+    a month that already has [sample] rows is skipped."""
     import random
-    rng = random.Random(7)
     today = date.today()
+    if start is None:
+        start = date(today.year, 5, 1)
+        if start > today:
+            start = date(today.year - 1, 5, 1)
     conn = sqlite3.connect(DB_FILE)
     try:
-        if conn.execute("SELECT COUNT(*) FROM expenses WHERE note LIKE '[sample]%'").fetchone()[0]:
-            return 0
         pool = {
             "Food": [("Lunch", 8, 28), ("Dinner with family", 30, 80), ("Coffee", 6, 16), ("Groceries", 40, 120)],
             "Transport": [("Grab ride", 10, 35), ("Petrol", 50, 90), ("Parking", 3, 12)],
@@ -125,21 +129,29 @@ def seed_history_demo(months: int = 6) -> int:
             "Other": [("Gift", 20, 100), ("Misc", 5, 40)],
         }
         rows = []
-        for back in range(1, months + 1):
-            y, m = today.year, today.month - back
-            while m <= 0:
-                m += 12
-                y -= 1
-            dim = calendar.monthrange(y, m)[1]
-            for _ in range(rng.randint(15, 24)):
-                cat = rng.choices(CATEGORIES, weights=[34, 16, 12, 6, 6, 8, 4])[0]
-                note, lo, hi = rng.choice(pool[cat])
-                rows.append((round(rng.uniform(lo, hi), 2), cat, f"[sample] {note}",
-                             date(y, m, rng.randint(1, dim)).isoformat()))
-            rows.append((150.0, "Bills", "[sample] Internet bill", date(y, m, 5).isoformat()))
-            rows.append((round(rng.uniform(70, 130), 2), "Bills", "[sample] Electricity", date(y, m, 12).isoformat()))
-        conn.executemany("INSERT INTO expenses(amount, category, note, spent_on) VALUES (?,?,?,?)", rows)
-        conn.commit()
+        y, m = start.year, start.month
+        while (y, m) <= (today.year, today.month):
+            ym = f"{y:04d}-{m:02d}"
+            has = conn.execute("SELECT COUNT(*) FROM expenses WHERE note LIKE '[sample]%' AND substr(spent_on,1,7)=?",
+                               (ym,)).fetchone()[0]
+            if not has:
+                rng = random.Random(y * 100 + m)  # same month -> same sample data every time
+                last_day = today.day if (y, m) == (today.year, today.month) else calendar.monthrange(y, m)[1]
+                for _ in range(rng.randint(15, 24) if last_day > 20 else max(4, last_day)):
+                    cat = rng.choices(CATEGORIES, weights=[34, 16, 12, 6, 6, 8, 4])[0]
+                    note, lo, hi = rng.choice(pool[cat])
+                    rows.append((round(rng.uniform(lo, hi), 2), cat, f"[sample] {note}",
+                                 date(y, m, rng.randint(1, last_day)).isoformat()))
+                if last_day >= 5:
+                    rows.append((150.0, "Bills", "[sample] Internet bill", date(y, m, 5).isoformat()))
+                if last_day >= 12:
+                    rows.append((round(rng.uniform(70, 130), 2), "Bills", "[sample] Electricity", date(y, m, 12).isoformat()))
+            m += 1
+            if m > 12:
+                m, y = 1, y + 1
+        if rows:
+            conn.executemany("INSERT INTO expenses(amount, category, note, spent_on) VALUES (?,?,?,?)", rows)
+            conn.commit()
         return len(rows)
     finally:
         conn.close()
@@ -890,8 +902,8 @@ def main() -> None:
                 ensure_database(seed_demo=True)
                 st.toast("Database reset to sample data.")
                 st.rerun()
-        if st.button("📅 Add 6 months sample history", help="Adds sample expenses for the previous 6 months so the monthly charts have data"):
-            n = seed_history_demo(6)
+        if st.button("📅 Add sample data (May → now)", help="Adds sample expenses for every month from May up to today so the monthly charts have data"):
+            n = seed_history_demo()
             st.toast(f"Added {n} sample expenses." if n else "Sample history already added.")
             st.rerun()
         if st.button("🧹 Clear all data (empty DB)"):
