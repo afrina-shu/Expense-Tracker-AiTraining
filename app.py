@@ -909,11 +909,6 @@ def main() -> None:
             n = seed_history_demo()
             st.toast(f"Added {n} sample expenses." if n else "Sample history already added.")
             st.rerun()
-        if st.button("🧹 Clear all data (empty DB)"):
-            DB_FILE.unlink(missing_ok=True)
-            ensure_database(seed_demo=False)
-            st.session_state.messages = []
-            st.rerun()
         st.markdown("---")
 
         # ---- suggested questions
