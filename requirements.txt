@@ -2,4 +2,5 @@ google-adk>=1.0.0
 google-genai>=1.0.0
 mcp>=1.9.0
 streamlit>=1.35.0
+sqlparse>=0.5.0
 pandas>=2.0.0
