@@ -905,12 +905,6 @@ def main() -> None:
                 execute_demo_migration()
                 st.toast("Added `budgets` and `savings_goals` tables!")
                 st.rerun()
-        with col2:
-            if st.button("🔄 Reset DB", help="Back to the sample expenses only"):
-                DB_FILE.unlink(missing_ok=True)
-                ensure_database(seed_demo=True)
-                st.toast("Database reset to sample data.")
-                st.rerun()
         if st.button("📅 Add sample data (May → now)", help="Adds sample expenses for every month from May up to today so the monthly charts have data"):
             n = seed_history_demo()
             st.toast(f"Added {n} sample expenses." if n else "Sample history already added.")
